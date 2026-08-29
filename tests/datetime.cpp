@@ -105,6 +105,33 @@ TEST_CASE("localized date time formatting follows the configured locale") {
   }
 }
 
+TEST_CASE("toRFC3339 always renders UTC with the Z suffix, whatever the attached timezone") {
+  const numen::TimePoint t = sys_days{2026y / January / 18} + 2h + 30min;
+  auto in = [&](const char *zone) { return numen::DateTime{.time = t, .tz = test::zone(zone)}.toRFC3339(); };
+
+  CHECK(numen::DateTime{.time = t}.toRFC3339() == "2026-01-18T02:30:00Z");
+  CHECK(in("UTC") == "2026-01-18T02:30:00Z");
+  CHECK(in("Europe/Moscow") == "2026-01-18T02:30:00Z");
+  CHECK(in("America/New_York") == "2026-01-18T02:30:00Z");
+  CHECK(in("Pacific/Marquesas") == "2026-01-18T02:30:00Z");
+}
+
+TEST_CASE("toRFC3339 discards subseconds") {
+  const numen::TimePoint t = sys_days{2026y / January / 18} + 2h + 30min + 250ms;
+
+  CHECK(numen::DateTime{.time = t, .tz = test::zone("UTC")}.toRFC3339() == "2026-01-18T02:30:00Z");
+}
+
+TEST_CASE("json() renders date times as RFC 3339") {
+  auto config = configAt({2026y, January, 18d});
+  test::assertExpr("json(now)", "2026-01-18T00:00:00Z", config);
+  test::assertExpr("json(2026-01-18T14:30:00Z)", "2026-01-18T14:30:00Z", config);
+
+  config.timezone = test::zone("Europe/Moscow");
+  config.now = sys_days{year_month_day{2026y, January, 18d}} + 12h;
+  test::assertExpr("json(now)", "2026-01-18T12:00:00Z", config);
+}
+
 TEST_CASE("Trying to convert to non existent timezone fails") {
   numen::Numen calc{};
   REQUIRE_FALSE(calc.evaluate("now to WrongTimezone"));

@@ -66,6 +66,9 @@ struct DateTime {
 
   std::string toString(const DateTimeFormatOptions &opts = {}) const;
 
+  // Output date time in RFC 3339 format, sometimes called JSON format.
+  std::string toRFC3339() const;
+
   // Human readable representation of the timezone + optional additonal offset
   // attached to this DateTime object.
   std::string toTimezoneString() const;

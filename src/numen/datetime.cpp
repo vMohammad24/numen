@@ -195,6 +195,12 @@ static std::locale resolveLocale(const std::optional<std::string> &name) {
   } catch (const std::runtime_error &) { return std::locale::classic(); }
 }
 
+std::string DateTime::toRFC3339() const {
+  // discard subsecond
+  const auto tp = std::chrono::time_point_cast<std::chrono::seconds>(time);
+  return std::format("{:%Y-%m-%dT%H:%M:%SZ}", tp);
+}
+
 // TODO: if we want really idomatic display for dates, we probably
 // want to integrate https://cldr.unicode.org/translation/date-time/date-time-patterns
 // For now we don't, we just use the basic localized form

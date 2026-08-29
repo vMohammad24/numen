@@ -10,6 +10,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace numen::detail {
@@ -64,6 +65,10 @@ void FunctionCtx::expectAtLeast(std::size_t n) const {
 void FunctionDatabase::add(std::string_view name, FunctionHandler handler, bool isConverter) {
   m_fns.emplace_back(Entry{.name = name, .fn = std::move(handler)});
   if (isConverter) { m_convNames.emplace_back(name); }
+}
+
+void FunctionDatabase::addConverter(std::string_view name, FunctionHandler handler) {
+  add(name, std::move(handler), true);
 }
 
 const FunctionHandler *FunctionDatabase::find(std::string_view name) const {
@@ -329,17 +334,39 @@ FunctionDatabase makeBuiltin() {
     });
   }
 
-  db.add(
-      "weekday",
-      [](const FunctionCtx &ctx) {
-        ctx.expectAtLeast(1);
-        const auto dt = ctx.dateTime(0);
-        const auto displayTz = dt.tz ? dt.tz : tz::current_zone();
-        // vendored date::zoned_time has no std::formatter (will hit the macOS path)
-        const std::chrono::local_time localTime{displayTz->to_local(dt.time + dt.offset).time_since_epoch()};
-        return Computed{.value = std::format("{:%A}", localTime)};
-      },
-      true);
+  db.addConverter("json", [](const FunctionCtx &ctx) {
+    ctx.expectArgs(1);
+    auto &arg = ctx.args[0];
+
+    return std::visit(
+        [&](const auto &value) -> Computed {
+          using T = std::remove_cvref_t<decltype(value)>;
+
+          if constexpr (std::is_same_v<T, DateTime>) {
+            return Computed{value.toRFC3339()};
+          }
+
+          // FIXME: technically {:?} is not the same as JSON escaping (I'm pretty sure)
+          else if constexpr (std::is_same_v<T, std::string>) {
+            return Computed{std::format("{:?}", value)};
+          } else if constexpr (std::is_same_v<T, Num>) {
+            return Computed{value};
+          } else {
+            throw std::runtime_error(
+                std::format("json() does not support the {} value type", arg.valueTypeName()));
+          }
+        },
+        arg.value);
+  });
+
+  db.addConverter("weekday", [](const FunctionCtx &ctx) {
+    ctx.expectAtLeast(1);
+    const auto dt = ctx.dateTime(0);
+    const auto displayTz = dt.tz ? dt.tz : tz::current_zone();
+    // vendored date::zoned_time has no std::formatter (will hit the macOS path)
+    const std::chrono::local_time localTime{displayTz->to_local(dt.time + dt.offset).time_since_epoch()};
+    return Computed{.value = std::format("{:%A}", localTime)};
+  });
 
   return db;
 }

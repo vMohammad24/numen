@@ -29,6 +29,7 @@ public:
   static const FunctionDatabase &builtin();
 
   void add(std::string_view name, FunctionHandler handler, bool isConverter = false);
+  void addConverter(std::string_view name, FunctionHandler handler);
   const FunctionHandler *find(std::string_view name) const;
   const std::vector<std::string> &converterNames() const;
 
