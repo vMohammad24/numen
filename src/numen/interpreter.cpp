@@ -201,6 +201,8 @@ public:
         throw std::runtime_error(std::format("Cannot convert a {} to that", v.valueTypeName()));
       } else if constexpr (std::is_same_v<T, NumberString>) {
         return Computed{.value = Num{value}};
+      } else if constexpr (std::is_same_v<T, StringLiteral>) {
+        return Computed{.value = std::string{value.data}};
       } else if constexpr (std::is_same_v<T, PostfixExpression>) {
         auto lhs = computeExpr(*value.lhs);
         if (auto n = lhs.asNumber(); n && value.op == "k") { n->n = n->n.toDouble() * 1e3; }
@@ -810,6 +812,11 @@ private:
 
     auto r = (*handler)(FunctionCtx{.name = fn.name, .args = computedArgs});
     r.explicitlyConverted = std::ranges::any_of(computedArgs, &Computed::explicitlyConverted);
+
+    if (std::ranges::contains(FunctionDatabase::builtin().converterNames(), fn.name)) {
+      r.conversion = Conversion{.sides = ConversionOf<std::string>{.to = std::string{fn.name}}};
+    }
+
     return r;
   }
 

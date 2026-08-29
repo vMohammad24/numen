@@ -1,7 +1,9 @@
 #include "fn.hpp"
 #include "computed.hpp"
 #include "numen/numen.hpp"
+#include "utils.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <format>
@@ -334,6 +336,26 @@ FunctionDatabase makeBuiltin() {
     });
   }
 
+  db.addConverter("upper", [](const FunctionCtx &ctx) {
+    ctx.expectArgs(1);
+    if (auto str = ctx.args.front().asStr()) {
+      std::string out = *str;
+      upperCase(out);
+      return Computed{out};
+    }
+    throw std::runtime_error("Invalid type");
+  });
+
+  db.addConverter("lower", [](const FunctionCtx &ctx) {
+    ctx.expectArgs(1);
+    if (auto str = ctx.args.front().asStr()) {
+      std::string out = *str;
+      lowerCase(out);
+      return Computed{out};
+    }
+    throw std::runtime_error("Invalid type");
+  });
+
   db.addConverter("json", [](const FunctionCtx &ctx) {
     ctx.expectArgs(1);
     auto &arg = ctx.args[0];
@@ -344,11 +366,6 @@ FunctionDatabase makeBuiltin() {
 
           if constexpr (std::is_same_v<T, DateTime>) {
             return Computed{value.toRFC3339()};
-          }
-
-          // FIXME: technically {:?} is not the same as JSON escaping (I'm pretty sure)
-          else if constexpr (std::is_same_v<T, std::string>) {
-            return Computed{std::format("{:?}", value)};
           } else if constexpr (std::is_same_v<T, Num>) {
             return Computed{value};
           } else {

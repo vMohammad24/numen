@@ -30,6 +30,8 @@ std::optional<Lexer::Token> Lexer::next() {
   unsigned nfrac = 0;
   int expSign = 1;
   unsigned expValue = 0;
+  std::string stringLit{};
+  char stringLiteralOpener = 0;
 
   const auto getSelection = [&]() -> std::string_view {
     return m_data.substr(startPos, m_cursor - startPos);
@@ -43,7 +45,8 @@ std::optional<Lexer::Token> Lexer::next() {
   };
 
   const auto makeToken = [&](TokenType type, TokenData data) {
-    return Token{.raw = getSelection(), .type = type, .data = data, .start = startPos, .end = m_cursor};
+    return Token{
+        .raw = getSelection(), .type = type, .data = std::move(data), .start = startPos, .end = m_cursor};
   };
 
   constexpr auto isValidChar = [](char c) {
@@ -71,6 +74,8 @@ std::optional<Lexer::Token> Lexer::next() {
     }
     case State::String:
       return makeToken(TokenType::String, String{.data = getSelection()});
+    case State::StringLiteral:
+      return makeToken(TokenType::StringLiteral, StringLiteral{.data = stringLit});
     case State::Operator:
       return makeToken(TokenType::Operator, Operator{getSelection()});
     default:
@@ -92,6 +97,12 @@ std::optional<Lexer::Token> Lexer::next() {
         continue;
       }
       if (isSpace(c)) {
+        startPos += 1;
+        break;
+      }
+      if (c == '"' || c == '\'') {
+        state = State::StringLiteral;
+        stringLiteralOpener = c;
         startPos += 1;
         break;
       }
@@ -196,6 +207,24 @@ std::optional<Lexer::Token> Lexer::next() {
       // digits end a word ("2m10s") unless the word is being called ("log10(x)")
       if (isDigit(c) && isCalled(m_cursor)) break;
       return tryCommit();
+    }
+    case State::StringLiteral: {
+      if (c == stringLiteralOpener) {
+        auto tok = tryCommit();
+        ++m_cursor;
+        return tok;
+      }
+
+      if (c == '\\') {
+        ++m_cursor;
+        // for now escaping just appends the next character as is, disregarding quoting rules
+        // We don't parse special escape sequences. Maybe we can do it in the future if it proves useful.
+        if (m_cursor < m_data.size()) stringLit += m_data[m_cursor];
+      } else {
+        stringLit += c;
+      }
+
+      break;
     }
     }
 

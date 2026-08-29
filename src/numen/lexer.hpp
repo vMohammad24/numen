@@ -16,18 +16,30 @@ public:
     unsigned fromBase = 10;
   };
 
-  enum class OperatorType { Add, Subtract, Multiply, Divide, Pow };
-  enum class State { Reset, Number, Operator, NumberBase, NumberExponentSign, NumberExponent, String };
-  enum class TokenType { String, Number, Operator };
+  enum class State {
+    Reset,
+    Number,
+    Operator,
+    NumberBase,
+    NumberExponentSign,
+    NumberExponent,
+    String,
+    StringLiteral
+  };
+  enum class TokenType { String, StringLiteral, Number, Operator };
 
   struct String {
     std::string_view data;
+  };
+  struct StringLiteral {
+    // not a view, because of escaping
+    std::string data;
   };
   struct Operator {
     std::string_view op;
   };
 
-  using TokenData = std::variant<Number, String, Operator>;
+  using TokenData = std::variant<Number, String, StringLiteral, Operator>;
 
   struct Token {
     std::string_view raw;
@@ -35,6 +47,9 @@ public:
     TokenData data;
     std::string_view::size_type start = 0;
     std::string_view::size_type end = 0;
+
+    template <typename T> T *as() { return std::get_if<T>(&data); }
+    template <typename T> const T *as() const { return std::get_if<T>(&data); }
 
     bool isAdjacent(const Token &rhs) const { return end == rhs.start; }
 
