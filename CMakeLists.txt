@@ -48,7 +48,7 @@ set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 
 if (MSVC)
 	add_compile_options(/permissive- /Zc:preprocessor /Zc:__cplusplus /bigobj /utf-8 /wd4996)
-	add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+	add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS)
 
 	set(NUMEN_WARNING_OPTIONS /W4)
 	if (NUMEN_HARDENING)
