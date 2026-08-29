@@ -1,10 +1,16 @@
+#include "history-path.hpp"
 #include "numen/numen.hpp"
 #include "rang/rang.hpp"
+#include <cerrno>
+#include <filesystem>
 #include <iostream>
+#include <replxx.hxx>
 #include <string>
 #ifdef BUILD_CURRENCY_PROVIDER
 #include "vicinae-currency-provider.hpp"
 #endif
+
+namespace fs = std::filesystem;
 
 void process(numen::Numen &calc, const std::string &s) {
   std::string_view line{s};
@@ -41,14 +47,31 @@ int main(int ac, char **av) try {
     return 0;
   }
 
-  std::string line;
+  replxx::Replxx rx;
+  rx.set_max_history_size(512);
 
-  std::cout << "$> ";
-
-  while (std::getline(std::cin, line)) {
-    process(calc, line);
-    std::cout << "$> ";
+  const fs::path history = historyPath();
+  if (!history.empty()) {
+    std::error_code ec;
+    fs::create_directories(history.parent_path(), ec);
+    rx.history_load(history.string());
   }
+
+  for (;;) {
+    const char *raw = rx.input("$> ");
+    if (!raw) {
+      if (errno == EAGAIN) continue; // interrupted (e.g. window resize)
+      break;
+    }
+
+    std::string line{raw};
+    if (line.empty()) continue;
+
+    process(calc, line);
+    rx.history_add(line);
+  }
+
+  if (!history.empty()) rx.history_save(history.string());
 } catch (const std::exception &e) {
   std::cerr << "fatal: " << e.what() << "\n";
   return 1;

@@ -103,6 +103,7 @@ else()
 endif()
 
 option(USE_SYSTEM_CATCH "Use system catch2 for testing. Fetch it from GitHub otherwise." ${DEFAULT_USE_SYSTEM_CATCH})
+option(USE_SYSTEM_REPLXX "Use system replxx for the REPL. Fetch it from GitHub otherwise." OFF)
 
 if (WIN32 AND NOT MSVC)
 	message(FATAL_ERROR "Windows builds are only supported with MSVC (got '${CMAKE_CXX_COMPILER_ID}'). Please set -DCMAKE_CXX_COMPILER=cl.")
@@ -187,9 +188,28 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${VENDOR_DIR})
 
 if (BUILD_REPL)
+	if (USE_SYSTEM_REPLXX)
+		# replxx's installed config uses Threads::Threads without finding it
+		find_package(Threads REQUIRED)
+		find_package(replxx REQUIRED)
+	else()
+		include(FetchContent)
+		set(REPLXX_ARGS)
+		if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+			# keep replxx out of our install rules
+			set(REPLXX_ARGS EXCLUDE_FROM_ALL)
+		endif()
+		FetchContent_Declare(replxx
+			GIT_REPOSITORY https://github.com/AmokHuginnsson/replxx.git
+			GIT_TAG        release-0.0.4
+			${REPLXX_ARGS}
+		)
+		FetchContent_MakeAvailable(replxx)
+	endif()
+
 	set(REPL_TARGET repl)
-	set(SRCS src/repl/main.cpp)
-	set(LINK_LIBS)
+	set(SRCS src/repl/main.cpp src/repl/history-path.cpp)
+	set(LINK_LIBS replxx::replxx)
 
 	if (BUILD_REPL_CURRENCY_PROVIDER)
 		find_package(OpenSSL REQUIRED)

@@ -4,6 +4,7 @@
   cmake,
   ninja,
   openssl,
+  replxx,
   catch2_3,
   glibcLocales ? null,
   src ? lib.cleanSource ../.,
@@ -23,7 +24,10 @@ stdenv.mkDerivation {
     cmake
     ninja
   ];
-  buildInputs = lib.optionals withRepl [ openssl ];
+  buildInputs = lib.optionals withRepl [
+    openssl
+    replxx
+  ];
   nativeCheckInputs = [ catch2_3 ] ++ lib.optionals stdenv.hostPlatform.isLinux [ glibcLocales ];
 
   # the check sandbox has no locale data of its own
@@ -37,6 +41,7 @@ stdenv.mkDerivation {
     (lib.cmakeBool "BUILD_REPL_CURRENCY_PROVIDER" withReplCurrencyProvider)
     (lib.cmakeBool "BUILD_TESTS" doCheck)
     (lib.cmakeBool "USE_SYSTEM_CATCH" true)
+    (lib.cmakeBool "USE_SYSTEM_REPLXX" true)
   ];
 
   inherit doCheck;
