@@ -38,7 +38,7 @@
 - Implicit unit conversion is only implemented for currencies at this time (you need to explicitly convert using the `to` operator)
 - Parsing may be too permissive (in a bad way) at times
 - Natural language syntax sugar targets English only, although number and dates are localized
-- `.` is always used as a decimal separator, and `,` as a thousand separator, no matter the user's locale. Numbers are rendered with US-style grouping (`1,234,567.89`) for the same reason, so any output can be fed back in as input. Date time values are otherwise properly localized.
+- Most localization work is based on `std::locale` facets, which are sometimes different from the localization settings set by the user in their system settings (mostly on macOS/Windows). This means some formatting may be slightly off and inconsistent at times. Notoriously, the BSD locale for `fr_FR` uses `dd.mm.yyyy` for dates but the right separator to use for French in France is `/`. These are generally small details, but it's worth keeping in mind. Eventually we will probably read and format using system APIs where available.
 - Code is still ugly in some places :)
 
 ## Roadmap
