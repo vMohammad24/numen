@@ -376,6 +376,11 @@ FunctionDatabase makeBuiltin() {
         arg.value);
   });
 
+  db.add("typeof", [](const FunctionCtx &ctx) {
+    ctx.expectArgs(1);
+    return Computed{std::string{ctx.args.front().valueTypeName()}};
+  });
+
   db.addConverter("weekday", [](const FunctionCtx &ctx) {
     ctx.expectAtLeast(1);
     const auto dt = ctx.dateTime(0);
