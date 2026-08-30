@@ -91,7 +91,6 @@ std::string systemLocaleName() {
     locale += static_cast<char>(name[i]);
   return locale;
 #elif defined(__APPLE__)
-  if (auto env = envLocaleName(); !env.empty()) return env;
   return appleLocaleName();
 #else
   return envLocaleName();
@@ -103,11 +102,13 @@ std::locale resolveLocale(const std::optional<std::string> &name) {
     if (auto loc = tryLocale(*name)) return *loc;
   }
 
-  try {
-    const std::locale env{""};
-    // gui processes on macOS have no locale env vars, degrading "" to "C"
-    if (env.name() != "C" && env.name() != "POSIX") return env;
-  } catch (const std::runtime_error &) {} // NOLINT(bugprone-empty-catch)
+#ifndef _WIN32
+  if (!envLocaleName().empty()) {
+    try {
+      return std::locale{""};
+    } catch (const std::runtime_error &) {} // NOLINT(bugprone-empty-catch)
+  }
+#endif
 
   if (auto sys = systemLocaleName(); !sys.empty()) {
     if (auto loc = tryLocale(sys)) return *loc;
