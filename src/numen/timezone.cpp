@@ -174,6 +174,11 @@ const numen::tz::time_zone *TimezoneDB::userTz() const { return numen::tz::get_t
 
 const numen::tz::time_zone *TimezoneDB::query(std::string_view query) const {
   const auto &db = numen::tz::get_tzdb();
+  constexpr auto localTimeAliases =
+      std::to_array<std::string_view>({"here", "my time", "my timezone", "local time", "localtime", "local"});
+
+  if (std::ranges::any_of(localTimeAliases, [&](auto &&alias) { return equalsIgnoreCase(alias, query); }))
+    return numen::tz::current_zone();
 
   if (auto it =
           std::ranges::find_if(CUSTOM_LINKS, [&](auto &&link) { return equalsIgnoreCase(link.name, query); });
