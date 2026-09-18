@@ -275,7 +275,6 @@ if (BUILD_TESTS)
 		tests/string.cpp
 		tests/locale.cpp
 	)
-	catch_discover_tests(${TEST_TARGET} PROPERTIES SKIP_RETURN_CODE 4) # needed so that CTest does not report failure
 	target_compile_definitions(${TEST_TARGET} PRIVATE CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/corpus")
 
 	numen_harden(${TEST_TARGET})
@@ -284,7 +283,7 @@ if (BUILD_TESTS)
 
 	include(CTest)
 	include(Catch)
-	catch_discover_tests(${TEST_TARGET})
+	catch_discover_tests(${TEST_TARGET} PROPERTIES SKIP_RETURN_CODE 4) # needed so that CTest does not report failure
 endif()
 
 if (BUILD_FUZZER)
