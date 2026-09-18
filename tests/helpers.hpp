@@ -7,6 +7,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <chrono>
 #include <expected>
+#include <locale>
 #include <string>
 #include <string_view>
 
@@ -20,6 +21,13 @@ template <typename T, typename E> struct StringMaker<std::expected<T, E>> {
 } // namespace Catch
 
 namespace test {
+
+inline bool localeAvailable(const char *name) {
+  try {
+    const std::locale l{name};
+    return true;
+  } catch (...) { return false; }
+}
 
 // resolves links to the canonical zone, which raw locate_zone does not do with the date backend
 inline const numen::tz::time_zone *zone(std::string_view name) { return TimezoneDB{}.query(name); }

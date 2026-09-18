@@ -283,7 +283,7 @@ if (BUILD_TESTS)
 
 	include(CTest)
 	include(Catch)
-	catch_discover_tests(${TEST_TARGET})
+	catch_discover_tests(${TEST_TARGET} PROPERTIES SKIP_RETURN_CODE 4) # needed so that CTest does not report failure
 endif()
 
 if (BUILD_FUZZER)
