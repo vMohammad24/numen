@@ -52,6 +52,12 @@
 ( 1 + 5 ) 2^2               => 24
 ( 1 + 5 ) (1+1+1+1)         => 24
 
+# juxtaposition binds like '*', so a trailing '^' applies to the factor
+5^3-2(25)-13(5)-10          => 0
+10-2(3)                     => 4
+2+2(3)                      => 8
+2(3)^2                      => 18
+
 # functions
 min(1, 5)                   => 1
 max(1, 5)                   => 5
