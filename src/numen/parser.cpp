@@ -1064,13 +1064,13 @@ std::unique_ptr<Expression> Parser::pratParse(int minPrec) {
       left = makeBinExpr(std::move(left), std::move(right), std::string{it->id});
     } else {
       // FIXME: ugly, hacky...
-      if (!(3 < minPrec)) {
+      if (!(4 < minPrec)) {
         if (auto constant = parseConstant(tok->raw)) {
-          auto rhs = parseTerm();
+          auto rhs = pratParse(EXPONENT_PRECEDENCE);
           left = makeBinExpr(std::move(left), std::move(rhs), std::string{"*"});
           continue;
         } else if (tok->raw == "(") {
-          left = makeBinExpr(std::move(left), parseTerm(), std::string{"*"});
+          left = makeBinExpr(std::move(left), pratParse(EXPONENT_PRECEDENCE), std::string{"*"});
           continue;
         }
       }

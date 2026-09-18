@@ -49,6 +49,10 @@ Jan 2021                    => 2021-01-01 00:00:00 (Etc/UTC)
 2pi                         => 6.283185
 pi2                         => 6.283185
 
+# under a sign or a power the constant binds to its own factor
+10-2pi                      => 3.716815
+2pi^2                       => 19.739209
+
 # 'e' is an exponent marker only when digits follow it, and euler's constant
 # otherwise. this is the one place scientific notation and the constant collide
 1e3                         => 1,000
