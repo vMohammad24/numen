@@ -1,5 +1,6 @@
 #include "numen/numen.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include "helpers.hpp"
 #include "region-currency.hpp"
 #include "mock-currency-provider.hpp"
 
@@ -167,7 +168,12 @@ TEST_CASE("a sum is as implicit as a literal, only a 'to' pins the currency", "[
   auto calc = test::mockCalc();
   numen::EvalOptions fr{.parseOptions{.locale = "fr_FR"}};
 
-  CHECK(calc.evaluate("100 usd", fr) == "€92,35");
-  CHECK(calc.evaluate("50 usd + 50 usd", fr) == "€92,35");
+  if (test::localeAvailable("fr_FR.UTF-8")) {
+    CHECK(calc.evaluate("100 usd", fr) == "€92,35");
+    CHECK(calc.evaluate("50 usd + 50 usd", fr) == "€92,35");
+  } else {
+    WARN("fr_FR.UTF-8 locale not available, skipping");
+  }
+
   CHECK(calc.evaluate("(50 usd to usd) + 50 usd", fr) == "$100");
 }
